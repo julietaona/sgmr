@@ -3,11 +3,14 @@ package UI;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import modelo.*;
 import java.util.*;
+import modelo.*;
+import controlador.Controlador;
 
 public class MainWindow extends JFrame {
     JTable tablaAdmins, tablaClientes, tablaCertificados;
+    JTabbedPane tabs;
+    Controlador ctrl = new Controlador();
 
     public MainWindow() {
         setTitle("Sistema de Gestión Mantenimientos Roma");
@@ -16,115 +19,149 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JTabbedPane tabs = new JTabbedPane();
+        mostrarMenuPrincipal();
+    }
 
-        // Panel Administradores
-        JPanel panelAdmins = new JPanel(new BorderLayout());
+    private void mostrarMenuPrincipal() {
+        JPanel panelMenu = new JPanel(new BorderLayout());
+        JLabel titulo = new JLabel("Sistema de Gestión de Mantenimientos Roma", SwingConstants.CENTER);
+        titulo.setFont(new Font("Arial", Font.BOLD, 24));
+        titulo.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
+        panelMenu.add(titulo, BorderLayout.NORTH);
+
+        JPanel botones = new JPanel(new GridLayout(3, 1, 10, 10));
+        JButton btnAdministradores = new JButton("Ingresar al sistema");
+
+        botones.add(btnAdministradores);
+        panelMenu.add(botones, BorderLayout.CENTER);
+
+        btnAdministradores.addActionListener(e -> mostrarTabsYSeleccionar(0));
+
+        add(panelMenu, BorderLayout.CENTER);
+    }
+
+    private void mostrarTabsYSeleccionar(int tabIndex) {
+        getContentPane().removeAll();
+        tabs = new JTabbedPane();
+
+        // Administradores
+        JPanel panelAdmins = crearPanelAdmin();
+        tabs.addTab("Administradores", panelAdmins);
+
+        // Clientes
+        JPanel panelClientes = crearPanelClientes();
+        tabs.addTab("Clientes", panelClientes);
+
+        // Certificados
+        JPanel panelCertificados = crearPanelCertificados();
+        tabs.addTab("Certificados", panelCertificados);
+
+        add(tabs, BorderLayout.CENTER);
+        tabs.setSelectedIndex(tabIndex);
+        revalidate();
+        repaint();
+    }
+
+    private JPanel crearPanelAdmin() {
+        JPanel panel = new JPanel(new BorderLayout());
         tablaAdmins = new JTable();
         cargarTablaAdministradores();
-        panelAdmins.add(new JScrollPane(tablaAdmins), BorderLayout.CENTER);
+        panel.add(new JScrollPane(tablaAdmins), BorderLayout.CENTER);
 
-        JPanel botonesAdmin = new JPanel();
+        JPanel botones = new JPanel();
         JButton btnAgregar = new JButton("Agregar");
         JButton btnEditar = new JButton("Editar");
-        botonesAdmin.add(btnAgregar);
-        botonesAdmin.add(btnEditar);
-        panelAdmins.add(botonesAdmin, BorderLayout.SOUTH);
 
-        btnAgregar.addActionListener(e -> abrirFormularioAdministrador(null));
+        btnAgregar.addActionListener(e -> abrirFormularioAdmin(null));
         btnEditar.addActionListener(e -> {
             int fila = tablaAdmins.getSelectedRow();
             if (fila >= 0) {
                 int id = (int) tablaAdmins.getValueAt(fila, 0);
-                Administrador seleccionado = Administrador.obtenerTodos().stream()
-                        .filter(a -> a.administradorId == id)
+                Administrador a = ctrl.obtenerAdministradores().stream()
+                        .filter(ad -> ad.administradorId == id)
                         .findFirst().orElse(null);
-                abrirFormularioAdministrador(seleccionado);
-            } else {
-                JOptionPane.showMessageDialog(this, "Seleccioná un administrador para editar.");
+                abrirFormularioAdmin(a);
             }
         });
 
-        tabs.addTab("Administradores", panelAdmins);
+        botones.add(btnAgregar);
+        botones.add(btnEditar);
+        panel.add(botones, BorderLayout.SOUTH);
+        return panel;
+    }
 
-        // Panel Clientes
-        JPanel panelClientes = new JPanel(new BorderLayout());
+    private JPanel crearPanelClientes() {
+        JPanel panel = new JPanel(new BorderLayout());
         tablaClientes = new JTable();
         cargarTablaClientes();
-        panelClientes.add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
+        panel.add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
 
-        JPanel botonesClientes = new JPanel();
-        JButton btnAgregarCliente = new JButton("Agregar");
-        JButton btnEditarCliente = new JButton("Editar");
-        botonesClientes.add(btnAgregarCliente);
-        botonesClientes.add(btnEditarCliente);
-        panelClientes.add(botonesClientes, BorderLayout.SOUTH);
+        JPanel botones = new JPanel();
+        JButton btnAgregar = new JButton("Agregar");
+        JButton btnEditar = new JButton("Editar");
 
-        btnAgregarCliente.addActionListener(e -> abrirFormularioCliente(null));
-        btnEditarCliente.addActionListener(e -> {
+        btnAgregar.addActionListener(e -> abrirFormularioCliente(null));
+        btnEditar.addActionListener(e -> {
             int fila = tablaClientes.getSelectedRow();
             if (fila >= 0) {
                 int id = (int) tablaClientes.getValueAt(fila, 0);
-                Cliente seleccionado = Cliente.obtenerTodos().stream()
-                        .filter(a -> a.clienteId == id)
+                Cliente c = ctrl.obtenerClientes().stream()
+                        .filter(cli -> cli.clienteId == id)
                         .findFirst().orElse(null);
-                abrirFormularioCliente(seleccionado);
-            } else {
-                JOptionPane.showMessageDialog(this, "Seleccioná un cliente para editar.");
+                abrirFormularioCliente(c);
             }
         });
 
-        tabs.addTab("Clientes", panelClientes);
+        botones.add(btnAgregar);
+        botones.add(btnEditar);
+        panel.add(botones, BorderLayout.SOUTH);
+        return panel;
+    }
 
-        // Panel Certificados
-        JPanel panelCertificados = new JPanel(new BorderLayout());
+    private JPanel crearPanelCertificados() {
+        JPanel panel = new JPanel(new BorderLayout());
         tablaCertificados = new JTable();
         cargarTablaCertificados();
-        panelCertificados.add(new JScrollPane(tablaCertificados), BorderLayout.CENTER);
+        panel.add(new JScrollPane(tablaCertificados), BorderLayout.CENTER);
 
-        JPanel botonesCertificados = new JPanel();
-        JButton btnAgregarCertificado = new JButton("Agregar");
-        JButton btnEditarCertificado = new JButton("Editar");
-        JButton btnExportarPDF = new JButton("Exportar PDF");
-        botonesCertificados.add(btnAgregarCertificado);
-        botonesCertificados.add(btnEditarCertificado);
-        botonesCertificados.add(btnExportarPDF);
-        panelCertificados.add(botonesCertificados, BorderLayout.SOUTH);
+        JPanel botones = new JPanel();
+        JButton btnAgregar = new JButton("Agregar");
+        JButton btnEditar = new JButton("Editar");
+        JButton btnExportar = new JButton("Exportar PDF");
 
-        btnAgregarCertificado.addActionListener(e -> abrirFormularioCertificado(null));
-        btnEditarCertificado.addActionListener(e -> {
+        btnAgregar.addActionListener(e -> abrirFormularioCertificado(null));
+        btnEditar.addActionListener(e -> {
             int fila = tablaCertificados.getSelectedRow();
             if (fila >= 0) {
                 int id = (int) tablaCertificados.getValueAt(fila, 0);
-                Certificado seleccionado = Certificado.obtenerTodos().stream()
-                        .filter(c -> c.certificadoId == id)
+                Certificado c = ctrl.obtenerCertificados().stream()
+                        .filter(cert -> cert.certificadoId == id)
                         .findFirst().orElse(null);
-                abrirFormularioCertificado(seleccionado);
-            } else {
-                JOptionPane.showMessageDialog(this, "Seleccioná un certificado para editar.");
+                abrirFormularioCertificado(c);
             }
         });
+        btnExportar.addActionListener(e -> exportarCertificadosPDF());
 
-        btnExportarPDF.addActionListener(e -> exportarCertificadosPDF());
-
-        tabs.addTab("Certificados", panelCertificados);
-
-        add(tabs, BorderLayout.CENTER);
+        botones.add(btnAgregar);
+        botones.add(btnEditar);
+        botones.add(btnExportar);
+        panel.add(botones, BorderLayout.SOUTH);
+        return panel;
     }
 
     private void cargarTablaAdministradores() {
         String[] columnas = {"ID", "Nombre", "CUIT", "Dirección", "Email", "Teléfono", "Activo", "Fecha"};
         DefaultTableModel model = new DefaultTableModel(columnas, 0);
-        for (var a : Administrador.obtenerTodos()) {
+        for (Administrador a : ctrl.obtenerAdministradores()) {
             model.addRow(new Object[]{a.administradorId, a.nombre, a.cuit, a.direccion, a.email, a.telefono, a.activo, a.fechaCreacion});
         }
         tablaAdmins.setModel(model);
     }
 
     private void cargarTablaClientes() {
-        String[] columnas = {"ID", "Nombre", "CU", "Tipo de persona", "Dirección", "Email", "Teléfono", "Activo", "Fecha", "Admin ID"};
+        String[] columnas = {"ID", "Nombre", "CU", "Tipo Persona", "Dirección", "Email", "Teléfono", "Activo", "Fecha", "Admin ID"};
         DefaultTableModel model = new DefaultTableModel(columnas, 0);
-        for (var c : Cliente.obtenerTodos()) {
+        for (Cliente c : ctrl.obtenerClientes()) {
             model.addRow(new Object[]{c.clienteId, c.nombre, c.cu, c.tipoPersona, c.direccion, c.email, c.telefono, c.activo, c.fechaCreacion, c.administradorId});
         }
         tablaClientes.setModel(model);
@@ -133,28 +170,19 @@ public class MainWindow extends JFrame {
     private void cargarTablaCertificados() {
         String[] columnas = {"ID", "Cliente ID", "Fecha Tratamiento", "Fecha Vencimiento"};
         DefaultTableModel model = new DefaultTableModel(columnas, 0);
-        for (var cert : Certificado.obtenerTodos()) {
+        for (Certificado cert : ctrl.obtenerCertificados()) {
             model.addRow(new Object[]{cert.certificadoId, cert.clienteId, cert.fechaTratamiento, cert.fechaVencimiento});
         }
         tablaCertificados.setModel(model);
     }
 
-    private void abrirFormularioAdministrador(Administrador admin) {
-        JTextField tfNombre = new JTextField();
-        JTextField tfCUIT = new JTextField();
-        JTextField tfDireccion = new JTextField();
-        JTextField tfEmail = new JTextField();
-        JTextField tfTelefono = new JTextField();
-        JCheckBox chkActivo = new JCheckBox();
-
-        if (admin != null) {
-            tfNombre.setText(admin.nombre);
-            tfCUIT.setText(String.valueOf(admin.cuit));
-            tfDireccion.setText(admin.direccion);
-            tfEmail.setText(admin.email);
-            tfTelefono.setText(String.valueOf(admin.telefono));
-            chkActivo.setSelected(admin.activo);
-        }
+    private void abrirFormularioAdmin(Administrador admin) {
+        JTextField tfNombre = new JTextField(admin != null ? admin.nombre : "");
+        JTextField tfCUIT = new JTextField(admin != null ? String.valueOf(admin.cuit) : "");
+        JTextField tfDireccion = new JTextField(admin != null ? admin.direccion : "");
+        JTextField tfEmail = new JTextField(admin != null ? admin.email : "");
+        JTextField tfTelefono = new JTextField(admin != null ? String.valueOf(admin.telefono) : "");
+        JCheckBox chkActivo = new JCheckBox("Activo", admin != null && admin.activo);
 
         JPanel panel = new JPanel(new GridLayout(0, 1));
         panel.add(new JLabel("Nombre:")); panel.add(tfNombre);
@@ -162,7 +190,7 @@ public class MainWindow extends JFrame {
         panel.add(new JLabel("Dirección:")); panel.add(tfDireccion);
         panel.add(new JLabel("Email:")); panel.add(tfEmail);
         panel.add(new JLabel("Teléfono:")); panel.add(tfTelefono);
-        panel.add(new JLabel("Activo:")); panel.add(chkActivo);
+        panel.add(chkActivo);
 
         int result = JOptionPane.showConfirmDialog(this, panel, admin == null ? "Nuevo Administrador" : "Editar Administrador", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
@@ -174,26 +202,17 @@ public class MainWindow extends JFrame {
             admin.telefono = Long.parseLong(tfTelefono.getText());
             admin.activo = chkActivo.isSelected();
             admin.fechaCreacion = new Date();
-            if ((admin.administradorId == 0 ? admin.crear() : admin.actualizar())) cargarTablaAdministradores();
+            if (ctrl.guardarAdministrador(admin)) cargarTablaAdministradores();
         }
     }
 
     private void abrirFormularioCliente(Cliente cliente) {
-        JTextField tfNombre = new JTextField();
-        JTextField tfCUIT = new JTextField();
-        JTextField tfDireccion = new JTextField();
-        JTextField tfEmail = new JTextField();
-        JTextField tfTelefono = new JTextField();
-        JCheckBox chkActivo = new JCheckBox();
-
-        if (cliente != null) {
-            tfNombre.setText(cliente.nombre);
-            tfCUIT.setText(String.valueOf(cliente.cu));
-            tfDireccion.setText(cliente.direccion);
-            tfEmail.setText(cliente.email);
-            tfTelefono.setText(String.valueOf(cliente.telefono));
-            chkActivo.setSelected(cliente.activo);
-        }
+        JTextField tfNombre = new JTextField(cliente != null ? cliente.nombre : "");
+        JTextField tfCUIT = new JTextField(cliente != null ? String.valueOf(cliente.cu) : "");
+        JTextField tfDireccion = new JTextField(cliente != null ? cliente.direccion : "");
+        JTextField tfEmail = new JTextField(cliente != null ? cliente.email : "");
+        JTextField tfTelefono = new JTextField(cliente != null ? String.valueOf(cliente.telefono) : "");
+        JCheckBox chkActivo = new JCheckBox("Activo", cliente != null && cliente.activo);
 
         JPanel panel = new JPanel(new GridLayout(0, 1));
         panel.add(new JLabel("Nombre:")); panel.add(tfNombre);
@@ -201,7 +220,7 @@ public class MainWindow extends JFrame {
         panel.add(new JLabel("Dirección:")); panel.add(tfDireccion);
         panel.add(new JLabel("Email:")); panel.add(tfEmail);
         panel.add(new JLabel("Teléfono:")); panel.add(tfTelefono);
-        panel.add(new JLabel("Activo:")); panel.add(chkActivo);
+        panel.add(chkActivo);
 
         int result = JOptionPane.showConfirmDialog(this, panel, cliente == null ? "Nuevo Cliente" : "Editar Cliente", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
@@ -213,48 +232,42 @@ public class MainWindow extends JFrame {
             cliente.telefono = Long.parseLong(tfTelefono.getText());
             cliente.activo = chkActivo.isSelected();
             cliente.fechaCreacion = new Date();
-            if ((cliente.clienteId == 0 ? cliente.crear() : cliente.actualizar())) cargarTablaClientes();
+            if (ctrl.guardarCliente(cliente)) cargarTablaClientes();
         }
     }
 
     private void abrirFormularioCertificado(Certificado cert) {
-        JTextField tfFechaTratamiento = new JTextField();
-        JTextField tfFechaVencimiento = new JTextField();
-        JComboBox<Cliente> comboClientes = new JComboBox<>();
-        for (Cliente c : Cliente.obtenerTodos()) comboClientes.addItem(c);
+        JTextField tfTratamiento = new JTextField(cert != null ? cert.fechaTratamiento.toString() : "");
+        JTextField tfVencimiento = new JTextField(cert != null ? cert.fechaVencimiento.toString() : "");
+        JComboBox<Cliente> combo = new JComboBox<>();
+        for (Cliente c : ctrl.obtenerClientes()) combo.addItem(c);
 
         if (cert != null) {
-            tfFechaTratamiento.setText(cert.fechaTratamiento.toString());
-            tfFechaVencimiento.setText(cert.fechaVencimiento.toString());
-            for (int i = 0; i < comboClientes.getItemCount(); i++) {
-                if (comboClientes.getItemAt(i).clienteId == cert.clienteId) {
-                    comboClientes.setSelectedIndex(i);
+            for (int i = 0; i < combo.getItemCount(); i++) {
+                if (combo.getItemAt(i).clienteId == cert.clienteId) {
+                    combo.setSelectedIndex(i);
                     break;
                 }
             }
         }
 
         JPanel panel = new JPanel(new GridLayout(0, 1));
-        panel.add(new JLabel("Cliente:")); panel.add(comboClientes);
-        panel.add(new JLabel("Fecha Tratamiento (yyyy-MM-dd):")); panel.add(tfFechaTratamiento);
-        panel.add(new JLabel("Fecha Vencimiento (yyyy-MM-dd):")); panel.add(tfFechaVencimiento);
+        panel.add(new JLabel("Cliente:")); panel.add(combo);
+        panel.add(new JLabel("Fecha Tratamiento (yyyy-MM-dd):")); panel.add(tfTratamiento);
+        panel.add(new JLabel("Fecha Vencimiento (yyyy-MM-dd):")); panel.add(tfVencimiento);
 
         int result = JOptionPane.showConfirmDialog(this, panel, cert == null ? "Nuevo Certificado" : "Editar Certificado", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             if (cert == null) cert = new Certificado();
-            cert.clienteId = ((Cliente) comboClientes.getSelectedItem()).clienteId;
-            cert.fechaTratamiento = java.sql.Date.valueOf(tfFechaTratamiento.getText());
-            cert.fechaVencimiento = java.sql.Date.valueOf(tfFechaVencimiento.getText());
-            if ((cert.certificadoId == 0 ? cert.crear() : cert.actualizar())) cargarTablaCertificados();
+            cert.clienteId = ((Cliente) combo.getSelectedItem()).clienteId;
+            cert.fechaTratamiento = java.sql.Date.valueOf(tfTratamiento.getText());
+            cert.fechaVencimiento = java.sql.Date.valueOf(tfVencimiento.getText());
+            if (ctrl.guardarCertificado(cert)) cargarTablaCertificados();
         }
     }
 
     private void exportarCertificadosPDF() {
-        try {
-            JOptionPane.showMessageDialog(this, "PDF exportado correctamente.");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al exportar PDF: " + ex.getMessage());
-        }
+        JOptionPane.showMessageDialog(this, "PDF exportado correctamente.");
     }
 
     public static void main(String[] args) {
